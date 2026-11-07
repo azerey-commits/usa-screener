@@ -15,13 +15,16 @@ if c1.button("Yenile", type="primary"):
     st.cache_data.clear()
 
 
+DATA_VERSION = 3  # kolon yapısı değişince artır: eski önbellek kullanılmaz
+
+
 @st.cache_data(ttl=600, show_spinner=False)
-def load(include_etf: bool) -> pd.DataFrame:
+def load(include_etf: bool, version: int) -> pd.DataFrame:
     return screener.run(include_etf=include_etf, log=lambda *_: None)
 
 
 with st.spinner("Veriler indiriliyor (ilk çalıştırma 1-3 dk sürebilir)..."):
-    df = load(etf)
+    df = load(etf, DATA_VERSION)
 
 # ------------------------------------------------------------------ filtre paneli
 # Dolar cinsinden kolonlarda filtre milyon $ (M$) olarak girilir.
@@ -76,10 +79,12 @@ def color(v):
     return "color: #16a34a" if v > 0 else ("color: #dc2626" if v < 0 else "")
 
 
-pct_cols = ["Günlük %", "1S Mum %", "SMA'ya Uzaklık %", "52H Yükseğe Uzaklık %", "52H Düşüğe Uzaklık %"]
+pct_cols = [c for c in ["Günlük %", "1S Mum %", "SMA'ya Uzaklık %", "52H Yükseğe Uzaklık %",
+                         "52H Düşüğe Uzaklık %"] if c in view.columns]
 fmt = {c: "{:+.2f}%" for c in pct_cols}
 fmt.update({"Fiyat": "{:,.2f}", "Bugünkü Hacim ($)": fmt_money, "1S SMA(100)": "{:,.2f}",
             "52H En Yüksek": "{:,.2f}", "52H En Düşük": "{:,.2f}", "30G Ort. $ Hacim (M)": "{:,.0f}"})
+fmt = {k: v for k, v in fmt.items() if k in view.columns}
 styled = view.style.format(fmt, na_rep="-").map(color, subset=pct_cols)
 st.dataframe(styled, width="stretch", height=700)
 st.download_button("CSV indir", view.to_csv().encode("utf-8"), "screener.csv", "text/csv")
