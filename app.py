@@ -6,7 +6,7 @@ import screener
 
 st.set_page_config(page_title="ABD Hisse Screener", layout="wide")
 st.title("ABD Hisse Screener")
-st.caption(f"Filtre: Fiyat > ${screener.MIN_PRICE:g} ve {screener.AVG_DAYS} günlük ortalama "
+st.caption(f"Temel filtre: Fiyat > ${screener.MIN_PRICE:g} ve {screener.AVG_DAYS} günlük ortalama "
            f"dolar hacmi ≥ ${screener.MIN_AVG_DOLLAR_VOL/1e6:,.0f}M · Kaynak: Yahoo Finance (~15 dk gecikmeli)")
 
 c1, c2 = st.columns([1, 5])
@@ -23,7 +23,43 @@ def load(include_etf: bool) -> pd.DataFrame:
 with st.spinner("Veriler indiriliyor (ilk çalıştırma 1-3 dk sürebilir)..."):
     df = load(etf)
 
-st.write(f"**{len(df)} hisse** · son güncelleme: {pd.Timestamp.now():%H:%M:%S}")
+# ------------------------------------------------------------------ filtre paneli
+# Dolar cinsinden kolonlarda filtre milyon $ (M$) olarak girilir.
+MONEY_COLS = {"Bugünkü Hacim ($)": 1e6}
+num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+
+with st.expander("Filtreler", expanded=True):
+    sym_q = st.text_input("Sembol ara (virgülle birden fazla: AAPL, NVDA)", "")
+    grid = st.columns(4)
+    bounds = {}
+    for i, col in enumerate(num_cols):
+        scale = MONEY_COLS.get(col, 1)
+        label = f"{col} (M$)" if col in MONEY_COLS else col
+        with grid[i % 4]:
+            st.markdown(f"**{label}**")
+            a, b = st.columns(2)
+            lo = a.number_input("Min", value=None, key=f"min_{col}", format="%.2f",
+                                placeholder="min", label_visibility="collapsed")
+            hi = b.number_input("Max", value=None, key=f"max_{col}", format="%.2f",
+                                placeholder="max", label_visibility="collapsed")
+            bounds[col] = (lo, hi, scale)
+    if st.button("Filtreleri temizle"):
+        for col in num_cols:
+            st.session_state.pop(f"min_{col}", None)
+            st.session_state.pop(f"max_{col}", None)
+        st.rerun()
+
+view = df
+if sym_q.strip():
+    wanted = [s.strip().upper() for s in sym_q.split(",") if s.strip()]
+    view = view[view.index.to_series().str.upper().apply(lambda x: any(w in x for w in wanted))]
+for col, (lo, hi, scale) in bounds.items():
+    if lo is not None:
+        view = view[view[col] >= lo * scale]
+    if hi is not None:
+        view = view[view[col] <= hi * scale]
+
+st.write(f"**{len(view)} / {len(df)} hisse** · son güncelleme: {pd.Timestamp.now():%H:%M:%S}")
 
 
 def fmt_money(v):
@@ -40,10 +76,10 @@ def color(v):
     return "color: #16a34a" if v > 0 else ("color: #dc2626" if v < 0 else "")
 
 
-styled = (df.style
-          .format({"Fiyat": "{:,.2f}", "Günlük %": "{:+.2f}%", "Bugünkü Hacim ($)": fmt_money,
-                   "1S Mum %": "{:+.2f}%", "1S SMA(100)": "{:,.2f}", "SMA'ya Uzaklık %": "{:+.2f}%",
-                   "30G Ort. $ Hacim (M)": "{:,.0f}"}, na_rep="-")
-          .map(color, subset=["Günlük %", "1S Mum %", "SMA'ya Uzaklık %"]))
+pct_cols = ["Günlük %", "1S Mum %", "SMA'ya Uzaklık %", "52H Yükseğe Uzaklık %", "52H Düşüğe Uzaklık %"]
+fmt = {c: "{:+.2f}%" for c in pct_cols}
+fmt.update({"Fiyat": "{:,.2f}", "Bugünkü Hacim ($)": fmt_money, "1S SMA(100)": "{:,.2f}",
+            "52H En Yüksek": "{:,.2f}", "52H En Düşük": "{:,.2f}", "30G Ort. $ Hacim (M)": "{:,.0f}"})
+styled = view.style.format(fmt, na_rep="-").map(color, subset=pct_cols)
 st.dataframe(styled, width="stretch", height=700)
-st.download_button("CSV indir", df.to_csv().encode("utf-8"), "screener.csv", "text/csv")
+st.download_button("CSV indir", view.to_csv().encode("utf-8"), "screener.csv", "text/csv")

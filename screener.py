@@ -6,7 +6,8 @@ Filtreler:
   * Son 30 işlem günü ortalama dolar hacmi (Kapanış x Hacim) >= 300 Milyon USD
 
 Kolonlar:
-  Fiyat, Günlük %, Bugünkü Hacim ($), 30G Ort. $ Hacim, 1S Mum %, 1S SMA(100), SMA'ya Uzaklık %
+  Fiyat, Günlük %, Bugünkü Hacim ($), 30G Ort. $ Hacim, 1S Mum %, 1S SMA(100), SMA'ya Uzaklık %,
+  52H En Yüksek / Uzaklık %, 52H En Düşük / Uzaklık %
 
 Veri kaynağı: Yahoo Finance (yfinance) + Nasdaq hisse listesi. Ücretsiz, API anahtarı gerekmez.
 Kullanım:  python screener.py            (tablo yazdırır ve CSV kaydeder)
@@ -166,6 +167,20 @@ def hourly_metrics(h: pd.DataFrame) -> dict:
     return res
 
 
+def yearly_metrics(d: pd.DataFrame, price: float) -> dict:
+    """52 haftalık en yüksek / en düşük (gün içi High/Low) ve fiyatın bunlara uzaklığı."""
+    d = d.dropna(subset=["High", "Low"])
+    if d.empty:
+        return {}
+    hi, lo = float(d["High"].max()), float(d["Low"].min())
+    return {
+        "52H En Yüksek": hi,
+        "52H Yükseğe Uzaklık %": (price / hi - 1) * 100,
+        "52H En Düşük": lo,
+        "52H Düşüğe Uzaklık %": (price / lo - 1) * 100,
+    }
+
+
 def run(include_etf: bool = False, log=print) -> pd.DataFrame:
     t0 = time.time()
     syms = get_universe(include_etf)
@@ -184,8 +199,15 @@ def run(include_etf: bool = False, log=print) -> pd.DataFrame:
         if t in hourly:
             rows[t].update(hourly_metrics(hourly[t]))
 
+    log("52 haftalık veriler indiriliyor...")
+    yearly = _download(list(rows), period="1y", interval="1d")
+    for t in rows:
+        if t in yearly:
+            rows[t].update(yearly_metrics(yearly[t], rows[t]["Fiyat"]))
+
     cols = ["Fiyat", "Günlük %", "Bugünkü Hacim ($)", "1S Mum %", "1S SMA(100)",
-            "SMA'ya Uzaklık %", "30G Ort. $ Hacim (M)", "Son 1S Mum", "Tarih"]
+            "SMA'ya Uzaklık %", "52H En Yüksek", "52H Yükseğe Uzaklık %", "52H En Düşük",
+            "52H Düşüğe Uzaklık %", "30G Ort. $ Hacim (M)", "Son 1S Mum", "Tarih"]
     df = pd.DataFrame.from_dict(rows, orient="index").reindex(columns=cols)
     df.index.name = "Sembol"
     df = df.sort_values("30G Ort. $ Hacim (M)", ascending=False)
