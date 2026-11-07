@@ -2,7 +2,7 @@
 
 **Filtre:** Fiyat > 5 $ ve son 30 işlem günü ortalama dolar hacmi (Kapanış × Hacim) ≥ 300 milyon $
 
-**Kolonlar:** Fiyat · Günlük % · Bugünkü Hacim ($) · 1S Mum % · 1S SMA(100) · SMA'ya Uzaklık % · 52H En Yüksek / Uzaklık % · 52H En Düşük / Uzaklık % · 30G Ort. $ Hacim (M)
+**Kolonlar:** Sembol (tıklayınca TradingView açılır) · Şirket · Endüstri · Sektör · Fiyat · Günlük % · Bugünkü Hacim ($) · 1S Mum % · 1S SMA(100) · SMA'ya Uzaklık % · 52H En Yüksek / Uzaklık % · 52H En Düşük / Uzaklık % · 30G Ort. $ Hacim (M)
 
 ## Kurulum (Mac)
 ```bash
@@ -21,7 +21,8 @@ pip install -r requirements.txt
 - **1S Mum %:** Son 1 saatlik mumun (kapanış / açılış − 1). Seans açıkken bu mum henüz kapanmamış olabilir.
 - **1S SMA(100):** Son 100 adet 1 saatlik mumun kapanış ortalaması (sadece normal seans, pre/post market hariç).
 - **52H En Yüksek / En Düşük:** Son 1 yılın gün içi en yüksek ve en düşük fiyatı. Uzaklık = fiyat / seviye − 1 (yükseğe uzaklık 0 veya eksi, düşüğe uzaklık 0 veya artı).
-- **Filtreler:** Sayfanın üstündeki "Filtreler" panelinde her sayısal kolon için min/max girilebilir. Dolar hacmi kolonu milyon $ olarak girilir.
+- **Filtreler:** Sayfanın üstündeki "Filtreler" panelinde her sayısal kolon için min/max girilebilir. Dolar hacmi kolonu milyon $ olarak girilir. Sembol/şirket adı araması ile sektör ve endüstri seçimi de yapılabilir.
+- **Şirket / Endüstri / Sektör:** Nasdaq listesinden gelir; eksik olanlar Yahoo Finance'ten tamamlanır.
 - **30G Ort. $ Hacim:** Son 30 işlem gününde günlük (kapanış × hacim) ortalaması.
 
 ## Veri kaynağı ve sınırlar

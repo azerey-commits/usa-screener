@@ -15,7 +15,7 @@ if c1.button("Yenile", type="primary"):
     st.cache_data.clear()
 
 
-DATA_VERSION = 3  # kolon yapısı değişince artır: eski önbellek kullanılmaz
+DATA_VERSION = 4  # kolon yapısı değişince artır: eski önbellek kullanılmaz
 
 
 @st.cache_data(ttl=600, show_spinner=False)
@@ -31,15 +31,23 @@ with st.spinner("Veriler indiriliyor (ilk çalıştırma 1-3 dk sürebilir)...")
 MONEY_COLS = {"Bugünkü Hacim ($)": 1e6}
 num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
 
+
+def _opts(col):
+    return sorted(x for x in df[col].dropna().unique() if x) if col in df.columns else []
+
+
 with st.expander("Filtreler", expanded=True):
-    sym_q = st.text_input("Sembol ara (virgülle birden fazla: AAPL, NVDA)", "")
+    t1, t2, t3 = st.columns([2, 2, 3])
+    sym_q = t1.text_input("Sembol / şirket ara (virgülle birden fazla: AAPL, nvidia)", "")
+    sectors = t2.multiselect("Sektör", _opts("Sektör"))
+    industries = t3.multiselect("Endüstri", _opts("Endüstri"))
     grid = st.columns(4)
     bounds = {}
     for i, col in enumerate(num_cols):
         scale = MONEY_COLS.get(col, 1)
-        label = f"{col} (M$)" if col in MONEY_COLS else col
+        label = "Bugünkü Hacim (milyon $)" if col in MONEY_COLS else col
         with grid[i % 4]:
-            st.markdown(f"**{label}**")
+            st.markdown(f"**{label}**".replace("$", "\\$"))
             a, b = st.columns(2)
             lo = a.number_input("Min", value=None, key=f"min_{col}", format="%.2f",
                                 placeholder="min", label_visibility="collapsed")
@@ -54,8 +62,13 @@ with st.expander("Filtreler", expanded=True):
 
 view = df
 if sym_q.strip():
-    wanted = [s.strip().upper() for s in sym_q.split(",") if s.strip()]
-    view = view[view.index.to_series().str.upper().apply(lambda x: any(w in x for w in wanted))]
+    wanted = [w.strip().upper() for w in sym_q.split(",") if w.strip()]
+    hay = view.index.to_series().str.upper() + " " + view.get("Şirket", "").fillna("").str.upper()
+    view = view[hay.apply(lambda x: any(w in x for w in wanted))]
+if sectors:
+    view = view[view["Sektör"].isin(sectors)]
+if industries:
+    view = view[view["Endüstri"].isin(industries)]
 for col, (lo, hi, scale) in bounds.items():
     if lo is not None:
         view = view[view[col] >= lo * scale]
@@ -85,6 +98,22 @@ fmt = {c: "{:+.2f}%" for c in pct_cols}
 fmt.update({"Fiyat": "{:,.2f}", "Bugünkü Hacim ($)": fmt_money, "1S SMA(100)": "{:,.2f}",
             "52H En Yüksek": "{:,.2f}", "52H En Düşük": "{:,.2f}", "30G Ort. $ Hacim (M)": "{:,.0f}"})
 fmt = {k: v for k, v in fmt.items() if k in view.columns}
-styled = view.style.format(fmt, na_rep="-").map(color, subset=pct_cols)
-st.dataframe(styled, width="stretch", height=700)
+# Sembol kolonu TradingView linki olarak gösterilir (tıklayınca grafik açılır)
+show = view.copy()
+if "TradingView" in show.columns:
+    links = show.pop("TradingView")
+else:
+    links = "https://www.tradingview.com/chart/?symbol=" + show.index.str.replace("-", ".")
+show.insert(0, "Sembol", links)
+show = show.reset_index(drop=True)
+
+styled = show.style.format(fmt, na_rep="-").map(color, subset=pct_cols)
+st.dataframe(
+    styled, width="stretch", height=700, hide_index=True,
+    column_config={
+        "Sembol": st.column_config.LinkColumn("Sembol", display_text=r"symbol=(.*)$", pinned=True,
+                                              help="Tıkla: TradingView'da aç"),
+        "Şirket": st.column_config.TextColumn("Şirket", pinned=True),
+    },
+)
 st.download_button("CSV indir", view.to_csv().encode("utf-8"), "screener.csv", "text/csv")
