@@ -26,6 +26,14 @@ with st.spinner("Veriler indiriliyor (ilk çalıştırma 1-3 dk sürebilir)...")
 st.write(f"**{len(df)} hisse** · son güncelleme: {pd.Timestamp.now():%H:%M:%S}")
 
 
+def fmt_money(v):
+    if pd.isna(v):
+        return "-"
+    if v >= 1e9:
+        return f"${v/1e9:,.2f}B"
+    return f"${v/1e6:,.1f}M"
+
+
 def color(v):
     if pd.isna(v):
         return ""
@@ -33,7 +41,7 @@ def color(v):
 
 
 styled = (df.style
-          .format({"Fiyat": "{:,.2f}", "Günlük %": "{:+.2f}%", "Bugünkü Hacim": "{:,.0f}",
+          .format({"Fiyat": "{:,.2f}", "Günlük %": "{:+.2f}%", "Bugünkü Hacim ($)": fmt_money,
                    "1S Mum %": "{:+.2f}%", "1S SMA(100)": "{:,.2f}", "SMA'ya Uzaklık %": "{:+.2f}%",
                    "30G Ort. $ Hacim (M)": "{:,.0f}"}, na_rep="-")
           .map(color, subset=["Günlük %", "1S Mum %", "SMA'ya Uzaklık %"]))

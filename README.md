@@ -2,7 +2,7 @@
 
 **Filtre:** Fiyat > 5 $ ve son 30 işlem günü ortalama dolar hacmi (Kapanış × Hacim) ≥ 300 milyon $
 
-**Kolonlar:** Fiyat · Günlük % · Bugünkü Hacim · 1S Mum % · 1S SMA(100) · SMA'ya Uzaklık % · 30G Ort. $ Hacim (M)
+**Kolonlar:** Fiyat · Günlük % · Bugünkü Hacim ($) · 1S Mum % · 1S SMA(100) · SMA'ya Uzaklık % · 30G Ort. $ Hacim (M)
 
 ## Kurulum (Mac)
 ```bash
@@ -17,7 +17,7 @@ pip install -r requirements.txt
 
 ## Tanımlar
 - **Fiyat / Günlük %:** Son günlük mumun kapanışı, bir önceki günün kapanışına göre değişim. Seans içinde bu canlı (gecikmeli) fiyattır.
-- **Bugünkü Hacim:** Son işlem gününün hisse adedi cinsinden hacmi.
+- **Bugünkü Hacim ($):** Son işlem gününün dolar cinsinden hacmi (fiyat × adet). $1.25B = 1,25 milyar dolar, $850.0M = 850 milyon dolar.
 - **1S Mum %:** Son 1 saatlik mumun (kapanış / açılış − 1). Seans açıkken bu mum henüz kapanmamış olabilir.
 - **1S SMA(100):** Son 100 adet 1 saatlik mumun kapanış ortalaması (sadece normal seans, pre/post market hariç).
 - **30G Ort. $ Hacim:** Son 30 işlem gününde günlük (kapanış × hacim) ortalaması.

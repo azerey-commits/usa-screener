@@ -6,7 +6,7 @@ Filtreler:
   * Son 30 işlem günü ortalama dolar hacmi (Kapanış x Hacim) >= 300 Milyon USD
 
 Kolonlar:
-  Fiyat, Günlük %, Bugünkü Hacim, 30G Ort. $ Hacim, 1S Mum %, 1S SMA(100), SMA'ya Uzaklık %
+  Fiyat, Günlük %, Bugünkü Hacim ($), 30G Ort. $ Hacim, 1S Mum %, 1S SMA(100), SMA'ya Uzaklık %
 
 Veri kaynağı: Yahoo Finance (yfinance) + Nasdaq hisse listesi. Ücretsiz, API anahtarı gerekmez.
 Kullanım:  python screener.py            (tablo yazdırır ve CSV kaydeder)
@@ -145,7 +145,7 @@ def daily_metrics(d: pd.DataFrame) -> dict | None:
     return {
         "Fiyat": float(last["Close"]),
         "Günlük %": (float(last["Close"]) / float(prev["Close"]) - 1) * 100,
-        "Bugünkü Hacim": int(last["Volume"]),
+        "Bugünkü Hacim ($)": float(last["Close"]) * float(last["Volume"]),
         "30G Ort. $ Hacim (M)": float(dollar_vol.mean()) / 1e6,
         "Tarih": d.index[-1].strftime("%Y-%m-%d"),
     }
@@ -184,7 +184,7 @@ def run(include_etf: bool = False, log=print) -> pd.DataFrame:
         if t in hourly:
             rows[t].update(hourly_metrics(hourly[t]))
 
-    cols = ["Fiyat", "Günlük %", "Bugünkü Hacim", "1S Mum %", "1S SMA(100)",
+    cols = ["Fiyat", "Günlük %", "Bugünkü Hacim ($)", "1S Mum %", "1S SMA(100)",
             "SMA'ya Uzaklık %", "30G Ort. $ Hacim (M)", "Son 1S Mum", "Tarih"]
     df = pd.DataFrame.from_dict(rows, orient="index").reindex(columns=cols)
     df.index.name = "Sembol"
