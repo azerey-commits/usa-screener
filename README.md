@@ -2,7 +2,7 @@
 
 **Filtre:** Fiyat > 5 $ ve son 30 işlem günü ortalama dolar hacmi (Kapanış × Hacim) ≥ 300 milyon $
 
-**Kolonlar:** Sembol (tıklayınca TradingView açılır) · Şirket · Endüstri · Sektör · Fiyat · Günlük % · Bugünkü Hacim ($) · 1S Mum % · 1S SMA(100) · SMA'ya Uzaklık % · 52H En Yüksek / Uzaklık % · 52H En Düşük / Uzaklık % · 30G Ort. $ Hacim (M)
+**Kolonlar:** Sembol (tıklayınca TradingView açılır) · Şirket · Endüstri · Sektör · Fiyat · Günlük % · Günlük Volatilite % · 20G Volatilite % · Bugünkü Hacim ($) · 1S Mum % · 1S SMA(100) · SMA'ya Uzaklık % · 52H En Yüksek / Uzaklık % · 52H En Düşük / Uzaklık % · 30G Ort. $ Hacim (M)
 
 ## Kurulum (Mac)
 ```bash
@@ -17,6 +17,8 @@ pip install -r requirements.txt
 
 ## Tanımlar
 - **Fiyat / Günlük %:** Son günlük mumun kapanışı, bir önceki günün kapanışına göre değişim. Seans içinde bu canlı (gecikmeli) fiyattır.
+- **Günlük Volatilite %:** Bugünkü gün içi aralık = (gün yükseği / gün düşüğü − 1). Örn. 4% → hisse bugün dipten tepeye %4 hareket etti.
+- **20G Volatilite %:** Son 20 işlem günündeki günlük getirilerin standart sapması (hissenin tipik bir günde ne kadar oynadığı).
 - **Bugünkü Hacim ($):** Son işlem gününün dolar cinsinden hacmi (fiyat × adet). $1.25B = 1,25 milyar dolar, $850.0M = 850 milyon dolar.
 - **1S Mum %:** Son 1 saatlik mumun (kapanış / açılış − 1). Seans açıkken bu mum henüz kapanmamış olabilir.
 - **1S SMA(100):** Son 100 adet 1 saatlik mumun kapanış ortalaması (sadece normal seans, pre/post market hariç).

@@ -15,7 +15,7 @@ if c1.button("Yenile", type="primary"):
     st.cache_data.clear()
 
 
-DATA_VERSION = 4  # kolon yapısı değişince artır: eski önbellek kullanılmaz
+DATA_VERSION = 5  # kolon yapısı değişince artır: eski önbellek kullanılmaz
 
 
 @st.cache_data(ttl=600, show_spinner=False)
@@ -95,7 +95,7 @@ def color(v):
 pct_cols = [c for c in ["Günlük %", "1S Mum %", "SMA'ya Uzaklık %", "52H Yükseğe Uzaklık %",
                          "52H Düşüğe Uzaklık %"] if c in view.columns]
 fmt = {c: "{:+.2f}%" for c in pct_cols}
-fmt.update({"Fiyat": "{:,.2f}", "Bugünkü Hacim ($)": fmt_money, "1S SMA(100)": "{:,.2f}",
+fmt.update({"Günlük Volatilite %": "{:.2f}%", "20G Volatilite %": "{:.2f}%", "Fiyat": "{:,.2f}", "Bugünkü Hacim ($)": fmt_money, "1S SMA(100)": "{:,.2f}",
             "52H En Yüksek": "{:,.2f}", "52H En Düşük": "{:,.2f}", "30G Ort. $ Hacim (M)": "{:,.0f}"})
 fmt = {k: v for k, v in fmt.items() if k in view.columns}
 # Sembol kolonu TradingView linki olarak gösterilir (tıklayınca grafik açılır)

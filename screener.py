@@ -7,7 +7,7 @@ Filtreler:
 
 Kolonlar:
   Sembol (TradingView linki), Şirket, Endüstri, Sektör,
-  Fiyat, Günlük %, Bugünkü Hacim ($), 30G Ort. $ Hacim, 1S Mum %, 1S SMA(100), SMA'ya Uzaklık %,
+  Fiyat, Günlük %, Günlük Volatilite % (bugünkü yüksek/düşük aralığı), 20G Volatilite %, Bugünkü Hacim ($), 30G Ort. $ Hacim, 1S Mum %, 1S SMA(100), SMA'ya Uzaklık %,
   52H En Yüksek / Uzaklık %, 52H En Düşük / Uzaklık %
 
 Veri kaynağı: Yahoo Finance (yfinance) + Nasdaq hisse listesi. Ücretsiz, API anahtarı gerekmez.
@@ -206,7 +206,13 @@ def daily_metrics(d: pd.DataFrame) -> dict | None:
         return None
     last, prev = d.iloc[-1], d.iloc[-2]
     dollar_vol = (d["Close"] * d["Volume"]).iloc[-AVG_DAYS:]
+    rets = d["Close"].pct_change().iloc[-20:]
     return {
+        # Bugünkü gün içi aralık: (Yüksek - Düşük) / Düşük
+        "Günlük Volatilite %": (float(last["High"]) / float(last["Low"]) - 1) * 100
+        if last["Low"] > 0 else float("nan"),
+        # Son 20 günün günlük getiri standart sapması
+        "20G Volatilite %": float(rets.std()) * 100,
         "Fiyat": float(last["Close"]),
         "Günlük %": (float(last["Close"]) / float(prev["Close"]) - 1) * 100,
         "Bugünkü Hacim ($)": float(last["Close"]) * float(last["Volume"]),
@@ -276,7 +282,8 @@ def run(include_etf: bool = False, log=print) -> pd.DataFrame:
         rows[t].update({"Şirket": info.get("name", ""), "Endüstri": info.get("industry", ""),
                         "Sektör": info.get("sector", ""), "TradingView": tradingview_url(t)})
 
-    cols = ["Şirket", "Endüstri", "Sektör", "Fiyat", "Günlük %", "Bugünkü Hacim ($)", "1S Mum %", "1S SMA(100)",
+    cols = ["Şirket", "Endüstri", "Sektör", "Fiyat", "Günlük %", "Günlük Volatilite %", "20G Volatilite %",
+            "Bugünkü Hacim ($)", "1S Mum %", "1S SMA(100)",
             "SMA'ya Uzaklık %", "52H En Yüksek", "52H Yükseğe Uzaklık %", "52H En Düşük",
             "52H Düşüğe Uzaklık %", "30G Ort. $ Hacim (M)", "Son 1S Mum", "Tarih", "TradingView"]
     df = pd.DataFrame.from_dict(rows, orient="index").reindex(columns=cols)
